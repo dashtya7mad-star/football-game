@@ -14,15 +14,18 @@ const finalScoreDisplay = document.getElementById('finalScore');
 const usernameDisplay = document.getElementById('username');
 const leaderboardList = document.getElementById('leaderboardList');
 
-// جلب اسم المستخدم من تليجرام
+// جلب اسم المستخدم ومعرّفه الفريد من تليجرام
 let playerName = "لاعب";
+let userId = "user_" + Math.floor(Math.random() * 100000);
+
 if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
     playerName = tg.initDataUnsafe.user.first_name || "لاعب";
+    userId = tg.initDataUnsafe.user.id || userId;
 }
 usernameDisplay.textContent = playerName;
 
 let score = 0;
-let highScore = localStorage.getItem('fb_high_score_' + playerName) || 0;
+let highScore = localStorage.getItem('fb_high_score_' + userId) || 0;
 highScoreDisplay.textContent = highScore;
 
 // فيزياء حركة الكرة
@@ -68,14 +71,11 @@ function kickBall(e) {
         gameLoop = requestAnimationFrame(updatePosition);
     }
 
-    // دفع الكرة للأعلى
     velocityY = -12;
-    
-    // حساب موقع اللمس بالنسبة لمركز الكرة (الفيزياء الواقعية)
     const touchX = e.touches ? e.touches[0].clientX : e.clientX;
-    const ballCenter = ballX + 35; // منتصف الكرة
+    const ballCenter = ballX + 35;
     
-    // اللمس على اليمين يوجه الكرة لليسار، واللمس على اليسار يوجهها لليمين
+    // الفيزياء الواقعية
     velocityX = (touchX - ballCenter) * -0.25;
 
     score++;
@@ -84,52 +84,65 @@ function kickBall(e) {
     if (score > highScore) {
         highScore = score;
         highScoreDisplay.textContent = highScore;
-        localStorage.setItem('fb_high_score_' + playerName, highScore);
-        saveScoreToLeaderboard(playerName, highScore);
+        localStorage.setItem('fb_high_score_' + userId, highScore);
     }
 }
 
-// حفظ النتيجة في لوحة الصدارة
-function saveScoreToLeaderboard(name, score) {
-    let scores = JSON.parse(localStorage.getItem('global_scores') || '[]');
-    const existingPlayerIndex = scores.findIndex(item => item.name === name);
+// رابط سيرفر سحابي مجاني لحفظ النتائج لجميع اللاعبين
+const DB_URL = "https://football-game-leaderboard-default-rtdb.firebaseio.com/scores";
 
-    if (existingPlayerIndex !== -1) {
-        if (score > scores[existingPlayerIndex].score) {
-            scores[existingPlayerIndex].score = score;
+async function saveScoreToCloud(id, name, score) {
+    try {
+        await fetch(`${DB_URL}/${id}.json`, {
+            method: 'PUT',
+            body: JSON.stringify({ name: name, score: score, timestamp: Date.now() })
+        });
+    } catch (err) {
+        console.log("خطأ في الاتصال بالسحابة:", err);
+    }
+}
+
+async function fetchLeaderboardFromCloud() {
+    leaderboardList.innerHTML = '<li>جاري تحميل الترتيب العام... ⏳</li>';
+    try {
+        const res = await fetch(`${DB_URL}.json`);
+        const data = await res.json();
+
+        if (!data) {
+            leaderboardList.innerHTML = '<li>كن أول من يسجل نقطة! ⚽️</li>';
+            return;
         }
-    } else {
-        scores.push({ name: name, score: score });
+
+        // تحويل البيانات وترتيبها من الأكبر للأصغر
+        let scoresArr = Object.values(data);
+        scoresArr.sort((a, b) => b.score - a.score);
+
+        leaderboardList.innerHTML = '';
+        scoresArr.slice(0, 10).forEach((item, index) => {
+            const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`;
+            const li = document.createElement('li');
+            li.innerHTML = `${medal} <b>${item.name}</b>: ${item.score} نقطة`;
+            leaderboardList.appendChild(li);
+        });
+    } catch (err) {
+        leaderboardList.innerHTML = '<li>تعذر تحميل القائمة ❌</li>';
     }
-
-    scores.sort((a, b) => b.score - a.score);
-    localStorage.setItem('global_scores', JSON.stringify(scores));
-}
-
-// تحديث عرض قائمة الترتيب
-function updateLeaderboardUI() {
-    let scores = JSON.parse(localStorage.getItem('global_scores') || '[]');
-    leaderboardList.innerHTML = '';
-
-    if (scores.length === 0) {
-        leaderboardList.innerHTML = '<li>كن أول من يسجل نقطة! ⚽️</li>';
-        return;
-    }
-
-    scores.slice(0, 10).forEach((item, index) => {
-        const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`;
-        const li = document.createElement('li');
-        li.innerHTML = `${medal} <b>${item.name}</b>: ${item.score} نقطة`;
-        leaderboardList.appendChild(li);
-    });
 }
 
 function endGame() {
     isPlaying = false;
     cancelAnimationFrame(gameLoop);
     finalScoreDisplay.textContent = score;
-    saveScoreToLeaderboard(playerName, highScore);
-    updateLeaderboardUI();
+    
+    // حفظ أعلى نتيجة وتحديث السحابة
+    if (highScore > 0) {
+        saveScoreToCloud(userId, playerName, highScore).then(() => {
+            fetchLeaderboardFromCloud();
+        });
+    } else {
+        fetchLeaderboardFromCloud();
+    }
+    
     gameOverScreen.style.display = 'block';
 }
 
