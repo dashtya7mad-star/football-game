@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Hidden Telegram Football Game</title>
-    <!-- مكتبة تليجرام الرسمية -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * {
@@ -42,13 +41,15 @@
             position: absolute;
             width: 70px;
             height: 70px;
-            font-size: 55px;
+            font-size: 60px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             touch-action: none;
-            background: transparent;
+            background: transparent !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
         }
         #gameOver, #leaderboardModal {
             display: none;
@@ -113,7 +114,6 @@
 
     <div id="ball">⚽️</div>
 
-    <!-- شاشة الخسارة الأصلية -->
     <div id="gameOver">
         <h2>انتهت اللعبة! ⚽️</h2>
         <p>نقاطك في هذه الجولة: <b id="finalScore">0</b></p>
@@ -122,7 +122,6 @@
         <button class="btn btn-top" onclick="openLeaderboard()">🏆 أفضل 10 لاعبين</button>
     </div>
 
-    <!-- نافذة قائمة أفضل 10 لاعبين -->
     <div id="leaderboardModal">
         <h2 style="color: #ffa502;">🏆 أفضل 10 لاعبين</h2>
         <ol id="leaderboardList">
@@ -132,6 +131,6 @@
     </div>
 </div>
 
-<script src="game.js?v=5"></script>
+<script src="game.js?v=999"></script>
 </body>
 </html>
