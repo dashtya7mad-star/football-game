@@ -1,11 +1,10 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>Hidden Telegram Football Game</title>
+    <title>Telegram Football Game</title>
     
-    <!-- منع الذاكرة المؤقتة لضمان التحديث الفوري -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
@@ -21,13 +20,12 @@
         body {
             margin: 0;
             padding: 0;
-            /* لون الخلفية الأزرق الغامق المريح للعين */
-            background: #0f172a;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             overflow: hidden;
             height: 100vh;
             width: 100vw;
-            color: #fff;
+            color: #000;
         }
         #gameContainer {
             position: relative;
@@ -35,34 +33,95 @@
             height: 100vh;
             overflow: hidden;
         }
-        /* تعديل شريط النقاط ليكون في المنتصف تماماً */
-        #header {
+        #topBar {
             position: absolute;
-            top: 20px;
-            left: 0;
-            right: 0;
+            top: 15px;
+            left: 15px;
+            right: 15px;
             display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 20px;
-            font-size: 18px;
-            font-weight: bold;
+            justify-content: space-between;
+            align-items: flex-start;
             z-index: 10;
+        }
+        #backBtn {
+            font-size: 18px;
+            color: #007aff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            font-weight: 400;
+        }
+        #highScoreBox {
+            text-align: right;
+            font-size: 14px;
+            color: #000;
+        }
+        #highScoreBox .label {
+            font-size: 13px;
+            color: #333;
+        }
+        #highScoreBox .value {
+            font-size: 16px;
+            font-weight: 400;
+            margin-top: 2px;
+        }
+        #scoreContainer {
+            position: absolute;
+            top: 22%;
+            left: 50%;
+            transform: translateX(-50%);
             text-align: center;
+            z-index: 5;
+            pointer-events: none;
+        }
+        #currentBestLabel {
+            font-size: 14px;
+            color: #8e8e93;
+            margin-bottom: 5px;
+            display: none;
+        }
+        #scoreDisplay {
+            font-size: 72px;
+            font-weight: 200;
+            color: #555555;
+            line-height: 1;
         }
         #ball {
             position: absolute;
-            width: 70px;
-            height: 70px;
-            font-size: 55px;
+            width: 90px;
+            height: 90px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             touch-action: none;
-            background: transparent !important;
-            border-radius: 0 !important;
-            box-shadow: none !important;
+            z-index: 10;
+        }
+        #ball img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            pointer-events: none;
+        }
+        .emoji-popup {
+            position: absolute;
+            font-size: 32px;
+            pointer-events: none;
+            z-index: 15;
+            animation: popupAnimation 0.8s ease-out forwards;
+        }
+        @keyframes popupAnimation {
+            0% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(0.5);
+            }
+            50% {
+                transform: translate(-50%, -80%) scale(1.2);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -120%) scale(1);
+            }
         }
         #gameOver {
             display: none;
@@ -70,55 +129,66 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(255, 255, 255, 0.95);
             padding: 25px;
-            border-radius: 20px;
+            border-radius: 16px;
             text-align: center;
-            width: 85%;
-            max-width: 380px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            width: 80%;
+            max-width: 320px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            border: 1px solid #eee;
             z-index: 20;
         }
         #gameOver h2 {
             margin-top: 0;
-            color: #ff4757;
+            color: #000;
+            font-weight: 500;
         }
         .btn {
-            background: #2ed573;
+            background: #007aff;
             color: white;
             border: none;
-            padding: 12px 24px;
+            padding: 12px 20px;
             font-size: 16px;
-            font-weight: bold;
+            font-weight: 500;
             border-radius: 10px;
             margin: 8px 0;
             cursor: pointer;
-            width: 80%;
-        }
-        .btn-share {
-            background: #1e90ff;
+            width: 100%;
         }
     </style>
 </head>
 <body>
 
 <div id="gameContainer">
-    <!-- الشريط العلوي أصبح في منتصف الشاشة بالكامل -->
-    <div id="header">
-        <div>اللاعب: <span id="username">...</span></div>
-        <div>|</div>
-        <div>النقاط: <span id="score">0</span></div>
-        <div>|</div>
-        <div>الأعلى: <span id="highScore">0</span></div>
+    <div id="topBar">
+        <div id="backBtn" onclick="resetGame()">&lt; Back</div>
+        <div id="highScoreBox">
+            <div class="label">High Score</div>
+            <div class="value" id="highScore">0</div>
+        </div>
     </div>
 
-    <div id="ball">⚽️</div>
+    <div id="scoreContainer">
+        <div id="currentBestLabel">Current Best</div>
+        <div id="scoreDisplay">0</div>
+    </div>
+
+    <div id="ball">
+        <svg viewBox="0 0 100 100" width="100%" height="100%">
+            <circle cx="50" cy="50" r="48" fill="#ffffff" stroke="#111111" stroke-width="2"/>
+            <polygon points="50,22 63,32 58,47 42,47 37,32" fill="#111111"/>
+            <polygon points="50,78 63,68 58,53 42,53 37,68" fill="#111111"/>
+            <polygon points="20,50 27,37 42,47 42,53 27,63" fill="#111111"/>
+            <polygon points="80,50 73,37 58,47 58,53 73,63" fill="#111111"/>
+            <path d="M 37,32 L 27,37 M 58,47 L 58,53 M 63,32 L 73,37 M 42,47 L 42,53 M 37,68 L 27,63 M 63,68 L 73,63 M 50,22 L 50,2 M 50,78 L 50,98" stroke="#111111" stroke-width="2"/>
+        </svg>
+    </div>
 
     <div id="gameOver">
-        <h2>انتهت اللعبة! ⚽️</h2>
-        <p>نقاطك في هذه الجولة: <b id="finalScore">0</b></p>
-        <button class="btn" onclick="resetGame()">إعادة اللعب 🔄</button>
-        <button class="btn btn-share" onclick="shareScore()">مشاركة النتيجة 🚀</button>
+        <h2>Game Over</h2>
+        <p>Score: <b id="finalScore">0</b></p>
+        <button class="btn" onclick="resetGame()">Play Again</button>
     </div>
 </div>
 
@@ -131,32 +201,31 @@
     }
 
     const ball = document.getElementById('ball');
-    const scoreDisplay = document.getElementById('score');
+    const scoreDisplay = document.getElementById('scoreDisplay');
     const highScoreDisplay = document.getElementById('highScore');
     const gameOverScreen = document.getElementById('gameOver');
     const finalScoreDisplay = document.getElementById('finalScore');
-    const usernameDisplay = document.getElementById('username');
+    const currentBestLabel = document.getElementById('currentBestLabel');
+    const gameContainer = document.getElementById('gameContainer');
 
-    let playerName = "لاعب";
-    let userId = "user_" + Math.floor(Math.random() * 100000);
-
+    let userId = "user_default";
     if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
-        playerName = tg.initDataUnsafe.user.first_name || "لاعب";
         userId = tg.initDataUnsafe.user.id || userId;
     }
-    usernameDisplay.textContent = playerName;
 
     let score = 0;
     let highScore = localStorage.getItem('fb_high_score_' + userId) || 0;
     highScoreDisplay.textContent = highScore;
 
-    let ballX = window.innerWidth / 2 - 35;
-    let ballY = window.innerHeight / 3;
+    let ballX = window.innerWidth / 2 - 45;
+    let ballY = window.innerHeight * 0.7;
     let velocityX = 0;
     let velocityY = 0;
-    const gravity = 0.45;
+    const gravity = 0.42;
     let isPlaying = false;
     let gameLoop;
+
+    const emojis = ['👏', '👍', '🙌', '🎉', '⚽️'];
 
     function updatePosition() {
         if (!isPlaying) return;
@@ -165,12 +234,12 @@
         ballX += velocityX;
         ballY += velocityY;
 
-        if (ballX <= 0 || ballX >= window.innerWidth - 70) {
-            velocityX *= -0.8;
-            ballX = Math.max(0, Math.min(ballX, window.innerWidth - 70));
+        if (ballX <= 0 || ballX >= window.innerWidth - 90) {
+            velocityX *= -0.75;
+            ballX = Math.max(0, Math.min(ballX, window.innerWidth - 90));
         }
 
-        if (ballY >= window.innerHeight - 80) {
+        if (ballY >= window.innerHeight - 100) {
             endGame();
             return;
         }
@@ -181,8 +250,24 @@
         gameLoop = requestAnimationFrame(updatePosition);
     }
 
+    function showEmoji(x, y) {
+        const emojiEl = document.createElement('div');
+        emojiEl.className = 'emoji-popup';
+        emojiEl.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        emojiEl.style.left = `${x}px`;
+        emojiEl.style.top = `${y}px`;
+        gameContainer.appendChild(emojiEl);
+
+        setTimeout(() => {
+            emojiEl.remove();
+        }, 800);
+    }
+
     function kickBall(e) {
         e.preventDefault();
+
+        const touchX = e.touches ? e.touches[0].clientX : e.clientX;
+        const touchY = e.touches ? e.touches[0].clientY : e.clientY;
 
         if (!isPlaying) {
             isPlaying = true;
@@ -190,20 +275,27 @@
             gameLoop = requestAnimationFrame(updatePosition);
         }
 
-        velocityY = -12;
-        const touchX = e.touches ? e.touches[0].clientX : e.clientX;
-        const ballCenter = ballX + 35;
-        
-        velocityX = (touchX - ballCenter) * -0.25;
+        velocityY = -13;
+        const ballCenter = ballX + 45;
+        velocityX = (touchX - ballCenter) * -0.22;
 
         score++;
         scoreDisplay.textContent = score;
+
+        if (score === Number(highScore) && score > 0) {
+            scoreDisplay.style.color = '#007aff';
+            currentBestLabel.style.display = 'block';
+        }
 
         if (score > highScore) {
             highScore = score;
             highScoreDisplay.textContent = highScore;
             localStorage.setItem('fb_high_score_' + userId, highScore);
+            scoreDisplay.style.color = '#007aff';
+            currentBestLabel.style.display = 'block';
         }
+
+        showEmoji(touchX, touchY);
     }
 
     function endGame() {
@@ -213,22 +305,20 @@
         gameOverScreen.style.display = 'block';
     }
 
-    function shareScore() {
-        const shareText = `لقد سجلت ${score} نقطة في لعبة كرة القدم! ⚽️ هل يمكنك التغلب علي؟`;
-        if (tg) {
-            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent('https://t.me/KurdshFootball_bot')}&text=${encodeURIComponent(shareText)}`);
-        }
-    }
-
     function resetGame() {
         score = 0;
         scoreDisplay.textContent = '0';
-        ballX = window.innerWidth / 2 - 35;
-        ballY = window.innerHeight / 3;
+        scoreDisplay.style.color = '#555555';
+        currentBestLabel.style.display = 'none';
+        
+        ballX = window.innerWidth / 2 - 45;
+        ballY = window.innerHeight * 0.7;
         velocityX = 0;
         velocityY = 0;
+        
         ball.style.left = `${ballX}px`;
         ball.style.top = `${ballY}px`;
+        
         gameOverScreen.style.display = 'none';
         isPlaying = false;
     }
