@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
     <title>Hidden Telegram Football Game</title>
+    
+    <!-- منع الذاكرة المؤقتة لضمان التحديث الفوري -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * {
@@ -15,7 +21,6 @@
         body {
             margin: 0;
             padding: 0;
-            /* خلفية اللون الأزرق القديم الأصلي */
             background: linear-gradient(135deg, #1e3c72, #2a5298);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow: hidden;
@@ -29,7 +34,6 @@
             height: 100vh;
             overflow: hidden;
         }
-        /* الشريط العلوي للنقاط والإنجاز السابق */
         #header {
             position: absolute;
             top: 20px;
@@ -42,7 +46,6 @@
             font-weight: bold;
             z-index: 10;
         }
-        /* كرة القدم الأصلية الشفافة */
         #ball {
             position: absolute;
             width: 70px;
@@ -57,7 +60,6 @@
             border-radius: 0 !important;
             box-shadow: none !important;
         }
-        /* شاشة الخسارة القديمة */
         #gameOver {
             display: none;
             position: absolute;
@@ -113,7 +115,6 @@
 </div>
 
 <script>
-    // 1. تهيئة ربط تليجرام
     const tg = window.Telegram ? window.Telegram.WebApp : null;
 
     if (tg) {
@@ -121,7 +122,6 @@
         tg.expand();
     }
 
-    // 2. العناصر
     const ball = document.getElementById('ball');
     const scoreDisplay = document.getElementById('score');
     const highScoreDisplay = document.getElementById('highScore');
@@ -129,7 +129,6 @@
     const finalScoreDisplay = document.getElementById('finalScore');
     const usernameDisplay = document.getElementById('username');
 
-    // 3. جلب هوية اللاعب
     let playerName = "لاعب";
     let userId = "user_" + Math.floor(Math.random() * 100000);
 
@@ -139,12 +138,10 @@
     }
     usernameDisplay.textContent = playerName;
 
-    // 4. النقاط وأعلى إنجاز مخزن
     let score = 0;
     let highScore = localStorage.getItem('fb_high_score_' + userId) || 0;
     highScoreDisplay.textContent = highScore;
 
-    // 5. فيزياء الحركة الأصلية
     let ballX = window.innerWidth / 2 - 35;
     let ballY = window.innerHeight / 3;
     let velocityX = 0;
@@ -160,13 +157,11 @@
         ballX += velocityX;
         ballY += velocityY;
 
-        // ارتداد من الجوانب
         if (ballX <= 0 || ballX >= window.innerWidth - 70) {
             velocityX *= -0.8;
             ballX = Math.max(0, Math.min(ballX, window.innerWidth - 70));
         }
 
-        // انتهاء عند ملامسة الأسفل
         if (ballY >= window.innerHeight - 80) {
             endGame();
             return;
@@ -178,7 +173,6 @@
         gameLoop = requestAnimationFrame(updatePosition);
     }
 
-    // 6. ضرب الكرة
     function kickBall(e) {
         e.preventDefault();
 
@@ -197,7 +191,6 @@
         score++;
         scoreDisplay.textContent = score;
 
-        // تحديث أعلى إنجاز عند تحطيم الرقم
         if (score > highScore) {
             highScore = score;
             highScoreDisplay.textContent = highScore;
@@ -205,7 +198,6 @@
         }
     }
 
-    // 7. إنهاء الجولة
     function endGame() {
         isPlaying = false;
         cancelAnimationFrame(gameLoop);
@@ -213,7 +205,6 @@
         gameOverScreen.style.display = 'block';
     }
 
-    // 8. مشاركة النتيجة
     function shareScore() {
         const shareText = `لقد سجلت ${score} نقطة في لعبة كرة القدم! ⚽️ هل يمكنك التغلب علي؟`;
         if (tg) {
@@ -221,7 +212,6 @@
         }
     }
 
-    // 9. إعادة الضبط
     function resetGame() {
         score = 0;
         scoreDisplay.textContent = '0';
