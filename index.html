@@ -21,7 +21,8 @@
         body {
             margin: 0;
             padding: 0;
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            /* لون الخلفية الأزرق الغامق المريح للعين */
+            background: #0f172a;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow: hidden;
             height: 100vh;
@@ -34,17 +35,20 @@
             height: 100vh;
             overflow: hidden;
         }
+        /* تعديل شريط النقاط ليكون في المنتصف تماماً */
         #header {
             position: absolute;
             top: 20px;
             left: 0;
             right: 0;
             display: flex;
-            justify-content: space-between;
-            padding: 0 20px;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
             font-size: 18px;
             font-weight: bold;
             z-index: 10;
+            text-align: center;
         }
         #ball {
             position: absolute;
@@ -99,9 +103,13 @@
 <body>
 
 <div id="gameContainer">
+    <!-- الشريط العلوي أصبح في منتصف الشاشة بالكامل -->
     <div id="header">
         <div>اللاعب: <span id="username">...</span></div>
-        <div>النقاط: <span id="score">0</span> | الأعلى: <span id="highScore">0</span></div>
+        <div>|</div>
+        <div>النقاط: <span id="score">0</span></div>
+        <div>|</div>
+        <div>الأعلى: <span id="highScore">0</span></div>
     </div>
 
     <div id="ball">⚽️</div>
