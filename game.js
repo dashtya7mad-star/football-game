@@ -71,12 +71,11 @@ function kickBall(e) {
     // دفع الكرة للأعلى
     velocityY = -12;
     
-    // حساب موقع اللمس بالنسبة لمركز الكرة (الفيزياء الواقعية الصحيحة)
+    // حساب موقع اللمس بالنسبة لمركز الكرة (الفيزياء الواقعية)
     const touchX = e.touches ? e.touches[0].clientX : e.clientX;
     const ballCenter = ballX + 35; // منتصف الكرة
     
-    // إذا لمست يمين الكرة (touchX > ballCenter) -> ترتد لليسار (velocityX سالب)
-    // إذا لمست يسار الكرة (touchX < ballCenter) -> ترتد لليمين (velocityX موجب)
+    // اللمس على اليمين يوجه الكرة لليسار، واللمس على اليسار يوجهها لليمين
     velocityX = (touchX - ballCenter) * -0.25;
 
     score++;
