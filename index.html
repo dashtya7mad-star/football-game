@@ -42,17 +42,15 @@
             position: absolute;
             width: 70px;
             height: 70px;
-            background: radial-gradient(circle at 30% 30%, #fff, #ccc);
-            border-radius: 50%;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            font-size: 55px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 40px;
             touch-action: none;
+            background: transparent;
         }
-        #gameOver {
+        #gameOver, #leaderboardModal {
             display: none;
             position: absolute;
             top: 50%;
@@ -69,7 +67,7 @@
             max-height: 80vh;
             overflow-y: auto;
         }
-        #gameOver h2 {
+        #gameOver h2, #leaderboardModal h2 {
             margin-top: 0;
             color: #ff4757;
         }
@@ -81,34 +79,26 @@
             font-size: 16px;
             font-weight: bold;
             border-radius: 10px;
-            margin: 8px;
+            margin: 8px 0;
             cursor: pointer;
             width: 80%;
         }
         .btn-share {
             background: #1e90ff;
         }
-        #leaderboard {
-            margin-top: 15px;
-            text-align: right;
-            background: rgba(255, 255, 255, 0.1);
-            padding: 10px;
-            border-radius: 10px;
-        }
-        #leaderboard h3 {
-            margin: 5px 0 10px 0;
-            text-align: center;
-            color: #ffa502;
-            font-size: 16px;
+        .btn-top {
+            background: #ffa502;
+            color: #000;
         }
         #leaderboardList {
             list-style: none;
             padding: 0;
-            margin: 0;
+            margin: 15px 0;
             font-size: 14px;
+            text-align: right;
         }
         #leaderboardList li {
-            padding: 5px 0;
+            padding: 8px 0;
             border-bottom: 1px solid rgba(255,255,255,0.1);
         }
     </style>
@@ -123,22 +113,25 @@
 
     <div id="ball">⚽️</div>
 
+    <!-- شاشة الخسارة الأصلية -->
     <div id="gameOver">
         <h2>انتهت اللعبة! ⚽️</h2>
         <p>نقاطك في هذه الجولة: <b id="finalScore">0</b></p>
-        
         <button class="btn" onclick="resetGame()">إعادة اللعب 🔄</button>
         <button class="btn btn-share" onclick="shareScore()">مشاركة النتيجة 🚀</button>
+        <button class="btn btn-top" onclick="openLeaderboard()">🏆 أفضل 10 لاعبين</button>
+    </div>
 
-        <div id="leaderboard">
-            <h3>🏆 قائمة أفضل 10 لاعبين</h3>
-            <ol id="leaderboardList">
-                <li>جاري التحميل... ⏳</li>
-            </ol>
-        </div>
+    <!-- نافذة قائمة أفضل 10 لاعبين -->
+    <div id="leaderboardModal">
+        <h2 style="color: #ffa502;">🏆 أفضل 10 لاعبين</h2>
+        <ol id="leaderboardList">
+            <li>جاري التحميل... ⏳</li>
+        </ol>
+        <button class="btn" onclick="closeLeaderboard()">إغلاق ✖️</button>
     </div>
 </div>
 
-<script src="game.js?v=2"></script>
+<script src="game.js?v=5"></script>
 </body>
 </html>
