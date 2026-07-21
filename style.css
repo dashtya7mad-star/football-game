@@ -11,8 +11,8 @@ body, html {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    background-color: #1b2838;
-    font-family: Arial, sans-serif;
+    background: linear-gradient(180deg, #101820 0%, #1a2a3a 100%);
+    font-family: system-ui, -apple-system, sans-serif;
     color: white;
 }
 
@@ -26,27 +26,32 @@ body, html {
 }
 
 .score-board {
-    margin-top: 40px;
+    margin-top: 20px;
     text-align: center;
 }
 
-#score {
-    font-size: 80px;
+#playerInfo {
+    font-size: 16px;
+    color: #0088cc;
     font-weight: bold;
+}
+
+#score {
+    font-size: 75px;
+    font-weight: 900;
     color: #ffffff;
-    text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    text-shadow: 0 4px 12px rgba(0,0,0,0.6);
 }
 
 .high-score {
-    font-size: 18px;
-    opacity: 0.8;
+    font-size: 15px;
+    opacity: 0.85;
 }
 
 .ball {
     position: absolute;
     font-size: 70px;
     cursor: pointer;
-    transition: transform 0.05s ease;
     will-change: transform, top, left;
 }
 
@@ -56,21 +61,62 @@ body, html {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: rgba(0, 0, 0, 0.85);
-    padding: 30px;
-    border-radius: 15px;
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid #0088cc;
+    padding: 20px;
+    width: 85%;
+    max-width: 350px;
+    border-radius: 20px;
     text-align: center;
-    box-shadow: 0 0 20px rgba(0,0,0,0.8);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
     z-index: 10;
 }
 
-.game-over button {
+.btn {
+    width: 100%;
+    border: none;
+    padding: 12px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 10px;
+    cursor: pointer;
+    margin-top: 8px;
+}
+
+.play-btn {
     background-color: #2ea44f;
     color: white;
-    border: none;
-    padding: 12px 24px;
-    font-size: 18px;
-    border-radius: 8px;
-    cursor: pointer;
+}
+
+.share-btn {
+    background-color: #0088cc;
+    color: white;
+}
+
+/* تصميم لوحة الصدارة */
+.leaderboard-section {
     margin-top: 15px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 10px;
+    text-align: right;
+}
+
+.leaderboard-section h3 {
+    font-size: 16px;
+    margin-bottom: 8px;
+    text-align: center;
+    color: #ffd700;
+}
+
+#leaderboardList {
+    padding-right: 20px;
+    margin: 0;
+    max-height: 120px;
+    overflow-y: auto;
+    font-size: 14px;
+}
+
+#leaderboardList li {
+    margin-bottom: 4px;
+    color: #e2e8f0;
 }
