@@ -3,134 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Hidden Telegram Football Game</title>
+    <title>Hidden Football Game</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        * {
-            box-sizing: border-box;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-        body {
-            margin: 0;
-            padding: 0;
-            background: linear-gradient(135deg, #1e3c72, #2a5298);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow: hidden;
-            height: 100vh;
-            color: #fff;
-        }
-        #gameContainer {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-        }
-        #header {
-            position: absolute;
-            top: 20px;
-            left: 0;
-            right: 0;
-            display: flex;
-            justify-content: space-between;
-            padding: 0 20px;
-            font-size: 18px;
-            font-weight: bold;
-            z-index: 10;
-        }
-        #ball {
-            position: absolute;
-            width: 70px;
-            height: 70px;
-            font-size: 60px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            touch-action: none;
-            background: transparent !important;
-            border-radius: 0 !important;
-            box-shadow: none !important;
-        }
-        #gameOver, #leaderboardModal {
-            display: none;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.9);
-            padding: 25px;
-            border-radius: 20px;
-            text-align: center;
-            width: 85%;
-            max-width: 380px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
-            z-index: 20;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-        #gameOver h2, #leaderboardModal h2 {
-            margin-top: 0;
-            color: #ff4757;
-        }
-        .btn {
-            background: #2ed573;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            font-size: 16px;
-            font-weight: bold;
-            border-radius: 10px;
-            margin: 8px 0;
-            cursor: pointer;
-            width: 80%;
-        }
-        .btn-share {
-            background: #1e90ff;
-        }
-        .btn-top {
-            background: #ffa502;
-            color: #000;
-        }
-        #leaderboardList {
-            list-style: none;
-            padding: 0;
-            margin: 15px 0;
-            font-size: 14px;
-            text-align: right;
-        }
-        #leaderboardList li {
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-    </style>
 </head>
 <body>
+    <div class="game-container" id="gameContainer">
+        <!-- شريط النقاط واسم اللاعب -->
+        <div class="score-board">
+            <div id="playerInfo">مرحباً <span id="username">لاعب</span> ⚽️</div>
+            <div id="score">0</div>
+            <div class="high-score">أعلى نتيجة لك: <span id="highScore">0</span></div>
+        </div>
 
-<div id="gameContainer">
-    <div id="header">
-        <div>اللاعب: <span id="username">...</span></div>
-        <div>النقاط: <span id="score">0</span> | الأعلى: <span id="highScore">0</span></div>
+        <!-- الكرة -->
+        <div class="ball" id="ball">⚽️</div>
+
+        <!-- شاشة نهاية اللعبة ولوحة الصدارة -->
+        <div class="game-over" id="gameOver">
+            <h2>خسرت! 😞</h2>
+            <p class="final-text">نقاطك هذه الجولة: <span id="finalScore">0</span></p>
+
+            <button class="btn play-btn" onclick="resetGame()">إعادة اللعب 🔄</button>
+            <button class="btn share-btn" onclick="shareScore()">تحدّ الأصدقاء 🏆</button>
+
+            <!-- جدول أفضل اللاعبين -->
+            <div class="leaderboard-section">
+                <h3>🏆 أفضل 10 لاعبين</h3>
+                <ol id="leaderboardList">
+                    <li>جاري تحميل قائمة الأبطال...</li>
+                </ol>
+            </div>
+        </div>
     </div>
 
-    <div id="ball">⚽️</div>
-
-    <div id="gameOver">
-        <h2>انتهت اللعبة! ⚽️</h2>
-        <p>نقاطك في هذه الجولة: <b id="finalScore">0</b></p>
-        <button class="btn" onclick="resetGame()">إعادة اللعب 🔄</button>
-        <button class="btn btn-share" onclick="shareScore()">مشاركة النتيجة 🚀</button>
-        <button class="btn btn-top" onclick="openLeaderboard()">🏆 أفضل 10 لاعبين</button>
-    </div>
-
-    <div id="leaderboardModal">
-        <h2 style="color: #ffa502;">🏆 أفضل 10 لاعبين</h2>
-        <ol id="leaderboardList">
-            <li>جاري التحميل... ⏳</li>
-        </ol>
-        <button class="btn" onclick="closeLeaderboard()">إغلاق ✖️</button>
-    </div>
-</div>
-
-<script src="game.js?v=999"></script>
+    <script src="game.js"></script>
 </body>
 </html>
