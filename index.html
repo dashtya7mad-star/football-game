@@ -2,30 +2,34 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
     <title>Hidden Telegram Football Game</title>
-    <!-- مكتبة تليجرام الرسمية -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * {
             box-sizing: border-box;
             user-select: none;
             -webkit-user-select: none;
+            -webkit-touch-callout: none;
         }
         body {
             margin: 0;
             padding: 0;
+            /* خلفية التدرج الأزرق الأصلية */
             background: linear-gradient(135deg, #1e3c72, #2a5298);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow: hidden;
             height: 100vh;
+            width: 100vw;
             color: #fff;
         }
         #gameContainer {
             position: relative;
             width: 100vw;
             height: 100vh;
+            overflow: hidden;
         }
+        /* الجزء العلوي للنقاط واسم اللاعب */
         #header {
             position: absolute;
             top: 20px;
@@ -38,6 +42,7 @@
             font-weight: bold;
             z-index: 10;
         }
+        /* كرة القدم الأصلية */
         #ball {
             position: absolute;
             width: 70px;
@@ -52,6 +57,7 @@
             border-radius: 0 !important;
             box-shadow: none !important;
         }
+        /* نافذة الخسارة */
         #gameOver {
             display: none;
             position: absolute;
@@ -98,7 +104,6 @@
 
     <div id="ball">⚽️</div>
 
-    <!-- شاشة الخسارة الأصلية فقط -->
     <div id="gameOver">
         <h2>انتهت اللعبة! ⚽️</h2>
         <p>نقاطك في هذه الجولة: <b id="finalScore">0</b></p>
@@ -107,6 +112,133 @@
     </div>
 </div>
 
-<script src="game.js?v=200"></script>
+<script>
+    // 1. تهيئة ربط تليجرام WebApp
+    const tg = window.Telegram ? window.Telegram.WebApp : null;
+
+    if (tg) {
+        tg.ready();
+        tg.expand();
+    }
+
+    // 2. عناصر DOM
+    const ball = document.getElementById('ball');
+    const scoreDisplay = document.getElementById('score');
+    const highScoreDisplay = document.getElementById('highScore');
+    const gameOverScreen = document.getElementById('gameOver');
+    const finalScoreDisplay = document.getElementById('finalScore');
+    const usernameDisplay = document.getElementById('username');
+
+    // 3. جلب بيانات اللاعب
+    let playerName = "لاعب";
+    let userId = "user_" + Math.floor(Math.random() * 100000);
+
+    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        playerName = tg.initDataUnsafe.user.first_name || "لاعب";
+        userId = tg.initDataUnsafe.user.id || userId;
+    }
+    usernameDisplay.textContent = playerName;
+
+    let score = 0;
+    let highScore = localStorage.getItem('fb_high_score_' + userId) || 0;
+    highScoreDisplay.textContent = highScore;
+
+    // 4. فيزياء حركة الكرة الأصلية
+    let ballX = window.innerWidth / 2 - 35;
+    let ballY = window.innerHeight / 3;
+    let velocityX = 0;
+    let velocityY = 0;
+    const gravity = 0.45;
+    let isPlaying = false;
+    let gameLoop;
+
+    function updatePosition() {
+        if (!isPlaying) return;
+
+        velocityY += gravity;
+        ballX += velocityX;
+        ballY += velocityY;
+
+        // ارتداد من الحواف الجانبية
+        if (ballX <= 0 || ballX >= window.innerWidth - 70) {
+            velocityX *= -0.8;
+            ballX = Math.max(0, Math.min(ballX, window.innerWidth - 70));
+        }
+
+        // الخسارة عند السقوط للأرض
+        if (ballY >= window.innerHeight - 80) {
+            endGame();
+            return;
+        }
+
+        ball.style.left = `${ballX}px`;
+        ball.style.top = `${ballY}px`;
+
+        gameLoop = requestAnimationFrame(updatePosition);
+    }
+
+    // 5. ضرب الكرة
+    function kickBall(e) {
+        e.preventDefault();
+
+        if (!isPlaying) {
+            isPlaying = true;
+            gameOverScreen.style.display = 'none';
+            gameLoop = requestAnimationFrame(updatePosition);
+        }
+
+        velocityY = -12;
+        const touchX = e.touches ? e.touches[0].clientX : e.clientX;
+        const ballCenter = ballX + 35;
+        
+        velocityX = (touchX - ballCenter) * -0.25;
+
+        score++;
+        scoreDisplay.textContent = score;
+
+        if (score > highScore) {
+            highScore = score;
+            highScoreDisplay.textContent = highScore;
+            localStorage.setItem('fb_high_score_' + userId, highScore);
+        }
+    }
+
+    // 6. إنهاء اللعبة
+    function endGame() {
+        isPlaying = false;
+        cancelAnimationFrame(gameLoop);
+        finalScoreDisplay.textContent = score;
+        gameOverScreen.style.display = 'block';
+    }
+
+    // 7. مشاركة النتيجة عبر تليجرام
+    function shareScore() {
+        const shareText = `لقد سجلت ${score} نقطة في لعبة كرة القدم! ⚽️ هل يمكنك التغلب علي؟`;
+        if (tg) {
+            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent('https://t.me/KurdshFootball_bot')}&text=${encodeURIComponent(shareText)}`);
+        }
+    }
+
+    // 8. إعادة تشغيل اللعبة
+    function resetGame() {
+        score = 0;
+        scoreDisplay.textContent = '0';
+        ballX = window.innerWidth / 2 - 35;
+        ballY = window.innerHeight / 3;
+        velocityX = 0;
+        velocityY = 0;
+        ball.style.left = `${ballX}px`;
+        ball.style.top = `${ballY}px`;
+        gameOverScreen.style.display = 'none';
+        isPlaying = false;
+    }
+
+    // الاستماع لحدث اللمس والضغط
+    ball.addEventListener('touchstart', kickBall, { passive: false });
+    ball.addEventListener('mousedown', kickBall);
+
+    // البدء
+    resetGame();
+</script>
 </body>
 </html>
