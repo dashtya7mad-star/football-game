@@ -1,4 +1,4 @@
-// الربط مع Telegram WebApp
+// الربط المباشر مع تليجرام لكسر الحاجة لأي روابط
 const tg = window.Telegram ? window.Telegram.WebApp : null;
 
 if (tg) {
@@ -10,19 +10,23 @@ const ball = document.getElementById('ball');
 const scoreDisplay = document.getElementById('score');
 const highScoreDisplay = document.getElementById('highScore');
 const gameOverScreen = document.getElementById('gameOver');
+const leaderboardModal = document.getElementById('leaderboardModal');
 const finalScoreDisplay = document.getElementById('finalScore');
 const usernameDisplay = document.getElementById('username');
 const leaderboardList = document.getElementById('leaderboardList');
 
-// جلب اسم المستخدم من تليجرام
+// جلب بيانات اللاعب تلقائياً من التليجرام
 let playerName = "لاعب";
+let userId = "user_" + Math.floor(Math.random() * 100000);
+
 if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
     playerName = tg.initDataUnsafe.user.first_name || "لاعب";
+    userId = tg.initDataUnsafe.user.id || userId;
 }
 usernameDisplay.textContent = playerName;
 
 let score = 0;
-let highScore = localStorage.getItem('fb_high_score_' + playerName) || 0;
+let highScore = localStorage.getItem('fb_high_score_' + userId) || 0;
 highScoreDisplay.textContent = highScore;
 
 // فيزياء حركة الكرة
@@ -41,13 +45,11 @@ function updatePosition() {
     ballX += velocityX;
     ballY += velocityY;
 
-    // الارتداد من الحواف الجانبية
     if (ballX <= 0 || ballX >= window.innerWidth - 70) {
         velocityX *= -0.8;
         ballX = Math.max(0, Math.min(ballX, window.innerWidth - 70));
     }
 
-    // الخسارة عند سقوط الكرة للأرض
     if (ballY >= window.innerHeight - 80) {
         endGame();
         return;
@@ -65,17 +67,14 @@ function kickBall(e) {
     if (!isPlaying) {
         isPlaying = true;
         gameOverScreen.style.display = 'none';
+        leaderboardModal.style.display = 'none';
         gameLoop = requestAnimationFrame(updatePosition);
     }
 
-    // دفع الكرة للأعلى
     velocityY = -12;
-    
-    // حساب موقع اللمس بالنسبة لمركز الكرة (الفيزياء الواقعية)
     const touchX = e.touches ? e.touches[0].clientX : e.clientX;
-    const ballCenter = ballX + 35; // منتصف الكرة
+    const ballCenter = ballX + 35;
     
-    // اللمس على اليمين يوجه الكرة لليسار، واللمس على اليسار يوجهها لليمين
     velocityX = (touchX - ballCenter) * -0.25;
 
     score++;
@@ -84,60 +83,72 @@ function kickBall(e) {
     if (score > highScore) {
         highScore = score;
         highScoreDisplay.textContent = highScore;
-        localStorage.setItem('fb_high_score_' + playerName, highScore);
-        saveScoreToLeaderboard(playerName, highScore);
+        localStorage.setItem('fb_high_score_' + userId, highScore);
     }
 }
 
-// حفظ النتيجة في لوحة الصدارة
-function saveScoreToLeaderboard(name, score) {
-    let scores = JSON.parse(localStorage.getItem('global_scores') || '[]');
-    const existingPlayerIndex = scores.findIndex(item => item.name === name);
+// سيرفر تخزين تلقائي سحابي مباشر
+const DB_URL = "https://football-game-leaderboard-default-rtdb.firebaseio.com/scores";
 
-    if (existingPlayerIndex !== -1) {
-        if (score > scores[existingPlayerIndex].score) {
-            scores[existingPlayerIndex].score = score;
+// حفظ النتيجة تلقائياً عند الخسارة
+async function saveScoreToCloud(id, name, score) {
+    try {
+        await fetch(`${DB_URL}/${id}.json`, {
+            method: 'PUT',
+            body: JSON.stringify({ name: name, score: score, timestamp: Date.now() })
+        });
+    } catch (err) {}
+}
+
+// جلب أعلى 10 نتائج تلقائياً
+async function fetchLeaderboardFromCloud() {
+    leaderboardList.innerHTML = '<li>جاري التحميل... ⏳</li>';
+    try {
+        const res = await fetch(`${DB_URL}.json`);
+        const data = await res.json();
+
+        if (!data) {
+            leaderboardList.innerHTML = '<li>لا يوجد لاعبين حتى الآن! ⚽️</li>';
+            return;
         }
-    } else {
-        scores.push({ name: name, score: score });
-    }
 
-    scores.sort((a, b) => b.score - a.score);
-    localStorage.setItem('global_scores', JSON.stringify(scores));
+        let scoresArr = Object.values(data);
+        scoresArr.sort((a, b) => b.score - a.score);
+
+        leaderboardList.innerHTML = '';
+        scoresArr.slice(0, 10).forEach((item, index) => {
+            const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`;
+            const li = document.createElement('li');
+            li.innerHTML = `${medal} <b>${item.name}</b>: ${item.score} نقطة`;
+            leaderboardList.appendChild(li);
+        });
+    } catch (err) {
+        leaderboardList.innerHTML = '<li>تعذر تحميل القائمة ❌</li>';
+    }
 }
 
-// تحديث عرض قائمة الترتيب
-function updateLeaderboardUI() {
-    let scores = JSON.parse(localStorage.getItem('global_scores') || '[]');
-    leaderboardList.innerHTML = '';
+function openLeaderboard() {
+    leaderboardModal.style.display = 'block';
+    gameOverScreen.style.display = 'none';
+    fetchLeaderboardFromCloud();
+}
 
-    if (scores.length === 0) {
-        leaderboardList.innerHTML = '<li>كن أول من يسجل نقطة! ⚽️</li>';
-        return;
-    }
-
-    scores.slice(0, 10).forEach((item, index) => {
-        const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`;
-        const li = document.createElement('li');
-        li.innerHTML = `${medal} <b>${item.name}</b>: ${item.score} نقطة`;
-        leaderboardList.appendChild(li);
-    });
+function closeLeaderboard() {
+    leaderboardModal.style.display = 'none';
+    gameOverScreen.style.display = 'block';
 }
 
 function endGame() {
     isPlaying = false;
     cancelAnimationFrame(gameLoop);
     finalScoreDisplay.textContent = score;
-    saveScoreToLeaderboard(playerName, highScore);
-    updateLeaderboardUI();
-    gameOverScreen.style.display = 'block';
-}
-
-function shareScore() {
-    const shareText = `لقد سجلت ${score} نقطة في لعبة كرة القدم! ⚽️ هل يمكنك التغلب علي؟`;
-    if (tg) {
-        tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent('https://t.me/KurdshFootball_bot')}&text=${encodeURIComponent(shareText)}`);
+    
+    // التخزين التلقائي المباشر بدون إرسال أي رابط
+    if (highScore > 0) {
+        saveScoreToCloud(userId, playerName, highScore);
     }
+    
+    gameOverScreen.style.display = 'block';
 }
 
 function resetGame() {
@@ -150,6 +161,7 @@ function resetGame() {
     ball.style.left = `${ballX}px`;
     ball.style.top = `${ballY}px`;
     gameOverScreen.style.display = 'none';
+    leaderboardModal.style.display = 'none';
     isPlaying = false;
 }
 
