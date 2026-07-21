@@ -10,17 +10,31 @@
 </head>
 <body>
     <div class="game-container" id="gameContainer">
+        <!-- شريط النقاط واسم اللاعب -->
         <div class="score-board">
-            <span id="score">0</span>
-            <div class="high-score">أعلى نتيجة: <span id="highScore">0</span></div>
+            <div id="playerInfo">مرحباً <span id="username">لاعب</span> ⚽️</div>
+            <div id="score">0</div>
+            <div class="high-score">أعلى نتيجة لك: <span id="highScore">0</span></div>
         </div>
 
+        <!-- الكرة -->
         <div class="ball" id="ball">⚽️</div>
 
+        <!-- شاشة نهاية اللعبة ولوحة الصدارة -->
         <div class="game-over" id="gameOver">
             <h2>خسرت! 😞</h2>
-            <p>النتيجة: <span id="finalScore">0</span></p>
-            <button onclick="resetGame()">إعادة اللعب 🔄</button>
+            <p class="final-text">نقاطك هذه الجولة: <span id="finalScore">0</span></p>
+
+            <button class="btn play-btn" onclick="resetGame()">إعادة اللعب 🔄</button>
+            <button class="btn share-btn" onclick="shareScore()">تحدّ الأصدقاء 🏆</button>
+
+            <!-- جدول أفضل اللاعبين -->
+            <div class="leaderboard-section">
+                <h3>🏆 أفضل 10 لاعبين</h3>
+                <ol id="leaderboardList">
+                    <li>جاري تحميل قائمة الأبطال...</li>
+                </ol>
+            </div>
         </div>
     </div>
 
