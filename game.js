@@ -41,7 +41,7 @@ function updatePosition() {
     ballX += velocityX;
     ballY += velocityY;
 
-    // الارتداد من الحواف
+    // الارتداد من الحواف الجانبية
     if (ballX <= 0 || ballX >= window.innerWidth - 70) {
         velocityX *= -0.8;
         ballX = Math.max(0, Math.min(ballX, window.innerWidth - 70));
@@ -68,10 +68,16 @@ function kickBall(e) {
         gameLoop = requestAnimationFrame(updatePosition);
     }
 
+    // دفع الكرة للأعلى
     velocityY = -12;
+    
+    // حساب موقع اللمس بالنسبة لمركز الكرة (الفيزياء الواقعية الصحيحة)
     const touchX = e.touches ? e.touches[0].clientX : e.clientX;
-    const ballCenter = ballX + 35;
-    velocityX = (ballCenter - touchX) * -0.15;
+    const ballCenter = ballX + 35; // منتصف الكرة
+    
+    // إذا لمست يمين الكرة (touchX > ballCenter) -> ترتد لليسار (velocityX سالب)
+    // إذا لمست يسار الكرة (touchX < ballCenter) -> ترتد لليمين (velocityX موجب)
+    velocityX = (touchX - ballCenter) * -0.25;
 
     score++;
     scoreDisplay.textContent = score;
@@ -84,7 +90,7 @@ function kickBall(e) {
     }
 }
 
-// حفظ النتيجة في القائمة المحترفة
+// حفظ النتيجة في لوحة الصدارة
 function saveScoreToLeaderboard(name, score) {
     let scores = JSON.parse(localStorage.getItem('global_scores') || '[]');
     const existingPlayerIndex = scores.findIndex(item => item.name === name);
