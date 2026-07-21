@@ -10,11 +10,11 @@ const ball = document.getElementById('ball');
 const scoreDisplay = document.getElementById('score');
 const highScoreDisplay = document.getElementById('highScore');
 const gameOverScreen = document.getElementById('gameOver');
+const leaderboardModal = document.getElementById('leaderboardModal');
 const finalScoreDisplay = document.getElementById('finalScore');
 const usernameDisplay = document.getElementById('username');
 const leaderboardList = document.getElementById('leaderboardList');
 
-// جلب اسم المستخدم ومعرّفه الفريد من تليجرام
 let playerName = "لاعب";
 let userId = "user_" + Math.floor(Math.random() * 100000);
 
@@ -28,7 +28,7 @@ let score = 0;
 let highScore = localStorage.getItem('fb_high_score_' + userId) || 0;
 highScoreDisplay.textContent = highScore;
 
-// فيزياء حركة الكرة
+// فيزياء الحركة
 let ballX = window.innerWidth / 2 - 35;
 let ballY = window.innerHeight / 3;
 let velocityX = 0;
@@ -44,13 +44,11 @@ function updatePosition() {
     ballX += velocityX;
     ballY += velocityY;
 
-    // الارتداد من الحواف الجانبية
     if (ballX <= 0 || ballX >= window.innerWidth - 70) {
         velocityX *= -0.8;
         ballX = Math.max(0, Math.min(ballX, window.innerWidth - 70));
     }
 
-    // الخسارة عند سقوط الكرة للأرض
     if (ballY >= window.innerHeight - 80) {
         endGame();
         return;
@@ -68,6 +66,7 @@ function kickBall(e) {
     if (!isPlaying) {
         isPlaying = true;
         gameOverScreen.style.display = 'none';
+        leaderboardModal.style.display = 'none';
         gameLoop = requestAnimationFrame(updatePosition);
     }
 
@@ -75,7 +74,6 @@ function kickBall(e) {
     const touchX = e.touches ? e.touches[0].clientX : e.clientX;
     const ballCenter = ballX + 35;
     
-    // الفيزياء الواقعية
     velocityX = (touchX - ballCenter) * -0.25;
 
     score++;
@@ -88,7 +86,7 @@ function kickBall(e) {
     }
 }
 
-// رابط سيرفر سحابي مجاني لحفظ النتائج لجميع اللاعبين
+// السيرفر السحابي
 const DB_URL = "https://football-game-leaderboard-default-rtdb.firebaseio.com/scores";
 
 async function saveScoreToCloud(id, name, score) {
@@ -98,22 +96,21 @@ async function saveScoreToCloud(id, name, score) {
             body: JSON.stringify({ name: name, score: score, timestamp: Date.now() })
         });
     } catch (err) {
-        console.log("خطأ في الاتصال بالسحابة:", err);
+        console.log("خطأ في الاتصال:", err);
     }
 }
 
 async function fetchLeaderboardFromCloud() {
-    leaderboardList.innerHTML = '<li>جاري تحميل الترتيب العام... ⏳</li>';
+    leaderboardList.innerHTML = '<li>جاري التحميل... ⏳</li>';
     try {
         const res = await fetch(`${DB_URL}.json`);
         const data = await res.json();
 
         if (!data) {
-            leaderboardList.innerHTML = '<li>كن أول من يسجل نقطة! ⚽️</li>';
+            leaderboardList.innerHTML = '<li>لا يوجد لاعبين حتى الآن! ⚽️</li>';
             return;
         }
 
-        // تحويل البيانات وترتيبها من الأكبر للأصغر
         let scoresArr = Object.values(data);
         scoresArr.sort((a, b) => b.score - a.score);
 
@@ -121,7 +118,7 @@ async function fetchLeaderboardFromCloud() {
         scoresArr.slice(0, 10).forEach((item, index) => {
             const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`;
             const li = document.createElement('li');
-            li.innerHTML = `${medal} <b>${item.name}</b>: ${item.score} نقطة`;
+            li.innerHTML = `<span>${medal} <b>${item.name}</b></span> <span><b>${item.score}</b> نقطة</span>`;
             leaderboardList.appendChild(li);
         });
     } catch (err) {
@@ -129,18 +126,25 @@ async function fetchLeaderboardFromCloud() {
     }
 }
 
+function openLeaderboard() {
+    isPlaying = false;
+    cancelAnimationFrame(gameLoop);
+    leaderboardModal.style.display = 'block';
+    gameOverScreen.style.display = 'none';
+    fetchLeaderboardFromCloud();
+}
+
+function closeLeaderboard() {
+    leaderboardModal.style.display = 'none';
+}
+
 function endGame() {
     isPlaying = false;
     cancelAnimationFrame(gameLoop);
     finalScoreDisplay.textContent = score;
     
-    // حفظ أعلى نتيجة وتحديث السحابة
     if (highScore > 0) {
-        saveScoreToCloud(userId, playerName, highScore).then(() => {
-            fetchLeaderboardFromCloud();
-        });
-    } else {
-        fetchLeaderboardFromCloud();
+        saveScoreToCloud(userId, playerName, highScore);
     }
     
     gameOverScreen.style.display = 'block';
@@ -163,6 +167,7 @@ function resetGame() {
     ball.style.left = `${ballX}px`;
     ball.style.top = `${ballY}px`;
     gameOverScreen.style.display = 'none';
+    leaderboardModal.style.display = 'none';
     isPlaying = false;
 }
 
