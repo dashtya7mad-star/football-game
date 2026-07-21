@@ -10,26 +10,22 @@ const ball = document.getElementById('ball');
 const scoreDisplay = document.getElementById('score');
 const highScoreDisplay = document.getElementById('highScore');
 const gameOverScreen = document.getElementById('gameOver');
-const leaderboardModal = document.getElementById('leaderboardModal');
 const finalScoreDisplay = document.getElementById('finalScore');
 const usernameDisplay = document.getElementById('username');
 const leaderboardList = document.getElementById('leaderboardList');
-const topBtn = document.getElementById('topBtn');
 
+// جلب اسم المستخدم من تليجرام
 let playerName = "لاعب";
-let userId = "user_" + Math.floor(Math.random() * 100000);
-
 if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
     playerName = tg.initDataUnsafe.user.first_name || "لاعب";
-    userId = tg.initDataUnsafe.user.id || userId;
 }
 usernameDisplay.textContent = playerName;
 
 let score = 0;
-let highScore = localStorage.getItem('fb_high_score_' + userId) || 0;
+let highScore = localStorage.getItem('fb_high_score_' + playerName) || 0;
 highScoreDisplay.textContent = highScore;
 
-// فيزياء الحركة الواقعية
+// فيزياء حركة الكرة
 let ballX = window.innerWidth / 2 - 35;
 let ballY = window.innerHeight / 3;
 let velocityX = 0;
@@ -45,11 +41,13 @@ function updatePosition() {
     ballX += velocityX;
     ballY += velocityY;
 
+    // الارتداد من الحواف الجانبية
     if (ballX <= 0 || ballX >= window.innerWidth - 70) {
         velocityX *= -0.8;
         ballX = Math.max(0, Math.min(ballX, window.innerWidth - 70));
     }
 
+    // الخسارة عند سقوط الكرة للأرض
     if (ballY >= window.innerHeight - 80) {
         endGame();
         return;
@@ -67,15 +65,17 @@ function kickBall(e) {
     if (!isPlaying) {
         isPlaying = true;
         gameOverScreen.style.display = 'none';
-        leaderboardModal.style.display = 'none';
-        topBtn.style.display = 'none'; // إخفاء الزر أثناء اللعب
         gameLoop = requestAnimationFrame(updatePosition);
     }
 
+    // دفع الكرة للأعلى
     velocityY = -12;
-    const touchX = e.touches ? e.touches[0].clientX : e.clientX;
-    const ballCenter = ballX + 35;
     
+    // حساب موقع اللمس بالنسبة لمركز الكرة (الفيزياء الواقعية)
+    const touchX = e.touches ? e.touches[0].clientX : e.clientX;
+    const ballCenter = ballX + 35; // منتصف الكرة
+    
+    // اللمس على اليمين يوجه الكرة لليسار، واللمس على اليسار يوجهها لليمين
     velocityX = (touchX - ballCenter) * -0.25;
 
     score++;
@@ -84,69 +84,52 @@ function kickBall(e) {
     if (score > highScore) {
         highScore = score;
         highScoreDisplay.textContent = highScore;
-        localStorage.setItem('fb_high_score_' + userId, highScore);
+        localStorage.setItem('fb_high_score_' + playerName, highScore);
+        saveScoreToLeaderboard(playerName, highScore);
     }
 }
 
-const DB_URL = "https://football-game-leaderboard-default-rtdb.firebaseio.com/scores";
+// حفظ النتيجة في لوحة الصدارة
+function saveScoreToLeaderboard(name, score) {
+    let scores = JSON.parse(localStorage.getItem('global_scores') || '[]');
+    const existingPlayerIndex = scores.findIndex(item => item.name === name);
 
-async function saveScoreToCloud(id, name, score) {
-    try {
-        await fetch(`${DB_URL}/${id}.json`, {
-            method: 'PUT',
-            body: JSON.stringify({ name: name, score: score, timestamp: Date.now() })
-        });
-    } catch (err) {}
-}
-
-async function fetchLeaderboardFromCloud() {
-    leaderboardList.innerHTML = '<li>جاري التحميل... ⏳</li>';
-    try {
-        const res = await fetch(`${DB_URL}.json`);
-        const data = await res.json();
-
-        if (!data) {
-            leaderboardList.innerHTML = '<li>لا يوجد لاعبين حتى الآن! ⚽️</li>';
-            return;
+    if (existingPlayerIndex !== -1) {
+        if (score > scores[existingPlayerIndex].score) {
+            scores[existingPlayerIndex].score = score;
         }
-
-        let scoresArr = Object.values(data);
-        scoresArr.sort((a, b) => b.score - a.score);
-
-        leaderboardList.innerHTML = '';
-        scoresArr.slice(0, 10).forEach((item, index) => {
-            const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`;
-            const li = document.createElement('li');
-            li.innerHTML = `${medal} <b>${item.name}</b>: ${item.score} نقطة`;
-            leaderboardList.appendChild(li);
-        });
-    } catch (err) {
-        leaderboardList.innerHTML = '<li>تعذر تحميل القائمة ❌</li>';
+    } else {
+        scores.push({ name: name, score: score });
     }
+
+    scores.sort((a, b) => b.score - a.score);
+    localStorage.setItem('global_scores', JSON.stringify(scores));
 }
 
-function openLeaderboard() {
-    isPlaying = false;
-    cancelAnimationFrame(gameLoop);
-    leaderboardModal.style.display = 'block';
-    gameOverScreen.style.display = 'none';
-    fetchLeaderboardFromCloud();
-}
+// تحديث عرض قائمة الترتيب
+function updateLeaderboardUI() {
+    let scores = JSON.parse(localStorage.getItem('global_scores') || '[]');
+    leaderboardList.innerHTML = '';
 
-function closeLeaderboard() {
-    leaderboardModal.style.display = 'none';
+    if (scores.length === 0) {
+        leaderboardList.innerHTML = '<li>كن أول من يسجل نقطة! ⚽️</li>';
+        return;
+    }
+
+    scores.slice(0, 10).forEach((item, index) => {
+        const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`;
+        const li = document.createElement('li');
+        li.innerHTML = `${medal} <b>${item.name}</b>: ${item.score} نقطة`;
+        leaderboardList.appendChild(li);
+    });
 }
 
 function endGame() {
     isPlaying = false;
     cancelAnimationFrame(gameLoop);
     finalScoreDisplay.textContent = score;
-    topBtn.style.display = 'block'; // إظهار الزر عند الخسارة
-    
-    if (highScore > 0) {
-        saveScoreToCloud(userId, playerName, highScore);
-    }
-    
+    saveScoreToLeaderboard(playerName, highScore);
+    updateLeaderboardUI();
     gameOverScreen.style.display = 'block';
 }
 
@@ -167,8 +150,6 @@ function resetGame() {
     ball.style.left = `${ballX}px`;
     ball.style.top = `${ballY}px`;
     gameOverScreen.style.display = 'none';
-    leaderboardModal.style.display = 'none';
-    topBtn.style.display = 'block';
     isPlaying = false;
 }
 
